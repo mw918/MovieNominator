@@ -1,0 +1,2 @@
+# MovieNominator
+An app to nominate movies for an awards ceremony. Can also be used as a personal to-watch list. If you want a free key, go to http://www.omdbapi.com/apikey.aspx. Search up movies in the search bar, and they will appear from the OMDB site. You can add the movies to your nomination list, which keeps its data between sessions. You may manually remove each item from this nomination list, or clear the entire list using the "Delete List" button. Enjoy!

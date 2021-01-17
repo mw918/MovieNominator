@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+#myInput {
+  background-image: url('https://i.imgur.com/0byt9ta.png'); /* Add a search icon to input */
+  background-size: 30px;
+  cursor: auto;
+  background-position: 5px 5px;  /*Position the search icon */
+  background-repeat: no-repeat; /* Do not repeat the icon image */
+  width: 95%; /* Full-width */
+  font-size: 16px; /* Increase font-size */
+  padding: 12px 20px 12px 40px; /* Add some padding */
+  border: 1px solid #ddd; /* Add a grey border */
+  margin-bottom: 12px; /* Add some space below the input */
+}
+
+h1{
+  text-align: center;
+}
+
+h2{
+  text-align: center;
+}
+
+.column {
+  float: left;
+  width: 50%;
+}
+
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+li button {
+  margin-left: 10px;
+}
+
+li button:hover {
+  background-color: #4CAF50;
+  color: white;
+}
+
+li button:active {
+  background-color: white;
+  border-color: #4CAF50;
+  margin-left: 20px;
+}
+
+li button:disabled {
+  background-color: grey;
+  color: black;
+}
+
+li {
+  border: 1px solid #ddd; /* Add a border to all links */
+  margin-top: -1px; /* Prevent double borders */
+  background-color: #f6f6f6; /* Grey background color */
+  padding: 12px; /* Add some padding */
+  text-decoration: none; /* Remove default text underline */
+  font-size: 18px; /* Increase the font-size */
+  color: black; /* Add a black text color */
+  display: block; /* Make it into a block element to fill the whole list */
+}
+
+.header {
+  padding: 20px;
+  text-align: center;
+  background: #1abc9c;
+  color: white;
+  font-size: 15px;
+}
+  </style>
+
+<div class="header" id="minFiveHeader">
+  <h1>You have 5 or more movies nominated!</h1>
+</div>
+
+</head>
+<body>
+
+<h1>&#x2728;Search movies &#x2728;</h1>
+<input type="text" id="myInput" onkeyup="typingText()" placeholder="Search for movie names..">
+<div class="row">
+  <div class="column">
+    <h2>Search results</h2>
+    <ul id="myUL">
+      <script>
+        var omdbKey;
+        async function init(){
+          var key = prompt("Please enter a valid ombapi", "");
+          try{
+            const res = await fetch("https://www.omdbapi.com/?apikey="+key+"&").then((res) => res.json());
+            if(res["Error"]=="Invalid API key!"){
+              console.log("Key error caught");
+              init();
+            }
+            else{
+              omdbKey=key;
+              try{
+                startingList=JSON.parse(localStorage.getItem("nominationList"));
+                if (startingList==null||startingList.length==0){
+                  localStorage.setItem("nominationList", []);
+                }
+              }
+              catch(error){
+                localStorage.setItem("nominationList", []);
+              }
+              getMovies("");
+            }
+        }
+          catch(error){
+            console.log(error);
+          }
+        }
+
+        async function getMovies(title) {
+          const res = await fetch("https://www.omdbapi.com/?apikey="+omdbKey+"&s="+title).then((res) => res.json());
+          let listData = res["Search"];
+          makeList(listData);
+        }
+
+        function makeList(listData) {
+          var savedList;
+          try{
+            savedList = JSON.parse(localStorage.getItem("nominationList"));
+          }
+          catch(error){
+            savedList = [];
+          }
+          checkHeader();
+          let listElement = document.getElementById('myUL');
+          let numberOfListItems;
+          try{
+            numberOfListItems=listData.length;
+          }
+          catch(error){
+            numberOfListItems=0;
+          }
+          let listItem,
+          movieName,
+          i, j;
+          for (i = 0; i < numberOfListItems; ++i) {
+            movieName = listData[i]["Title"]+" ("+listData[i]["Year"]+")"
+            listItem = document.createElement('li');
+            nominationButton = document.createElement('button');
+            if (savedList.includes(movieName)){
+              nominationButton.disabled=true;
+              nominationButton.innerHTML = "Chosen";
+            }
+            else{
+              nominationButton.setAttribute("type", 'button');
+              nominationButton.setAttribute("id", movieName);
+              nominationButton.setAttribute("onclick", "addNomination(id)");
+              nominationButton.innerHTML = "Nominate";
+            }
+            listItem.innerHTML = movieName;
+            listItem.appendChild(nominationButton);
+            listElement.appendChild(listItem);
+          }
+        }
+
+        function addNomination(name){
+          var nomList = localStorage.getItem("nominationList");
+          var movies;
+          if (nomList.length==0){
+            movies = [];
+          }
+          else{
+            movies = JSON.parse(localStorage.getItem("nominationList"));
+          }
+          movies.push(name);
+          localStorage.setItem("nominationList", JSON.stringify(movies));
+          update();
+          alert("Added "+name+" to nomination list");
+        }
+
+        // Usage
+        init();
+      </script>
+    </ul>
+  </div>
+  <div class="column">
+    <h2>Nomination list</h2>
+    <ul id="nominated">
+      <script>
+        async function showList(){
+          let idList, i, listTuple, removeButton, listLength;
+          try{
+            idList = JSON.parse(localStorage.getItem("nominationList"));
+            listLength = idList.length;
+          }
+          catch(error){
+            idList=[];
+            listLength = 0;
+          }
+          listTotal = document.getElementById('nominated');
+          //Empty out old list
+          while (listTotal.hasChildNodes()) {  
+            listTotal.removeChild(listTotal.firstChild);
+          }
+          for (i = 0; i < listLength; ++i) {
+            listTuple = document.createElement('li');
+            removeButton = document.createElement('button');
+            removeButton.setAttribute("type", 'button');
+            removeButton.setAttribute("id", idList[i]);
+            removeButton.setAttribute("onclick", "removeNomination(id)");
+            removeButton.innerHTML = "Remove";
+            listTuple.innerHTML = idList[i];
+            listTuple.appendChild(removeButton);
+            listTotal.appendChild(listTuple);
+          }
+        }
+
+        function deleteList(){
+          var r = confirm("Clear nomination list?");
+          if (r == true) {
+            localStorage.clear();
+            localStorage.setItem("nominationList", []);
+            console.log("Cleared local storage");
+            listTotal = document.getElementById('nominated');
+            //Empty out old list
+            while (listTotal.hasChildNodes()) {  
+              listTotal.removeChild(listTotal.firstChild);
+            }
+          }
+          update();
+        }
+
+        function removeNomination(name){
+          let idList = JSON.parse(localStorage.getItem("nominationList"));
+          for( var i = 0; i < idList.length; i++){
+            if ( idList[i] === name) { 
+              idList.splice(i, 1); 
+              i--;
+            }
+          }
+          localStorage.setItem("nominationList", JSON.stringify(idList));
+          update();
+          alert("Removed "+name+" from nomination list");
+        }
+
+        function update(){
+          showList();
+          typingText();
+          checkHeader();
+        }
+
+        function checkHeader(){
+          var head = document.getElementById("minFiveHeader");
+          var listLength, idList;
+          try{
+            idList = JSON.parse(localStorage.getItem("nominationList"));
+            listLength = idList.length;
+          }
+          catch(error){
+            idList=[];
+            listLength = 0;
+          }
+          if (listLength>=5) {
+            head.style.display = "block";
+          } 
+          else {
+            head.style.display = "none";
+          }
+        }
+        showList();
+      </script>
+    </ul>
+    <button onclick="deleteList()">Delete list</button>
+  </div>
+</div>
+<script>
+function typingText() {
+  // Declare variables
+  var input, filter, ul, li, a, i, txtValue;
+  input = document.getElementById('myInput');
+  filter = input.value.toUpperCase();
+  ul = document.getElementById("myUL");
+  li = ul.getElementsByTagName('li');
+  //Empty out old list
+  while (ul.hasChildNodes()) {  
+    ul.removeChild(ul.firstChild);
+  }
+  getMovies(filter);
+}
+</script>
+
+</body>
+</html>
